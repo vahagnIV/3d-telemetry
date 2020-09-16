@@ -6,6 +6,7 @@
 #define INC_3D_TELEMETRY_INCLUDE_VELOCITY_2D_MOTION_MODEL_H_
 
 #include <vector>
+#include <Eigen/Eigen>
 
 #include "imotion_model.h"
 
@@ -35,17 +36,17 @@ class Velocity2DMotionModel : public IMotionModel<TData, 3> {
     measurements_[last_measurement_index_].t = t;
   }
 
-  void GetJacobianAndError(Eigen::Matrix<TData, 3, 1> &self_state,
-                           Eigen::Matrix<TData, 3, 3> &jacobian,
-                           Eigen::Matrix<TData, 3, 3> &r,
+  void GetJacobianAndError(Eigen::Matrix<TData, 3, 1> & self_state,
+                           Eigen::Matrix<TData, 3, 3> & jacobian,
+                           Eigen::Matrix<TData, 3, 3> & r,
                            double last_state_update_time,
                            double current_time) override {
 
     // TODO: implement
-    self_state(0, 0) = self_state(1, 0) = self_state(2, 0) = 1;
+    self_state(Eigen::seq(0, 2), 0) = Eigen::Matrix<TData, 3, 1>::Ones();
     jacobian = Eigen::Matrix<TData, 3, 3>::Identity();
-    r = Eigen::Matrix<TData, 3, 3>::Identity();
-    std::cout << self_state << std::endl;
+    r = Eigen::Matrix<TData, 3, 3>::Identity()*2;
+//    std::cout << self_state << std::endl;
 
   }
  private:
