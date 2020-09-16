@@ -3,7 +3,7 @@ project(3d_telemetry)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(include)
+include_directories(include ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
 add_subdirectory(src)
 
 add_executable(3d_telemetry main.cpp)

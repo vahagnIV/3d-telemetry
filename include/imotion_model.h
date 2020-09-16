@@ -12,9 +12,11 @@ namespace gago {
 template<typename TData, int Dim>
 class IMotionModel {
  public:
-  virtual void GetJacobianAndError(Eigen::Matrix<TData, Dim, 1> & self_state,
-                                   Eigen::Matrix<TData, Dim, Dim> & jacobian,
-                                   Eigen::Matrix<TData, Dim, Dim> & r) = 0;
+  virtual void GetJacobianAndError(Eigen::Matrix<TData, Dim, 1> &self_state,
+                                   Eigen::Matrix<TData, Dim, Dim> &jacobian,
+                                   Eigen::Matrix<TData, Dim, Dim> &r,
+                                   double last_state_update_time,
+                                   double current_time) = 0;
 };
 
 }
