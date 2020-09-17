@@ -7,6 +7,8 @@
 #include "open_cv_feature_extractor.h"
 namespace gago {
 class SiftFeatureExtractor : public OpenCVFeatureExtractor {
+ public:
+  SiftFeatureExtractor(size_t max_count = std::numeric_limits<size_t>::max());
 
 };
 }

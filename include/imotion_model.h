@@ -9,14 +9,16 @@
 
 namespace gago {
 
-template<typename TData, int Dim>
+template<typename TMotionModelMeasurement, typename TData = float, int StateDim = 6>
 class IMotionModel {
  public:
-  virtual void GetJacobianAndError(Eigen::Matrix<TData, Dim, 1> &self_state,
-                                   Eigen::Matrix<TData, Dim, Dim> &jacobian,
-                                   Eigen::Matrix<TData, Dim, Dim> &r,
-                                   double last_state_update_time,
-                                   double current_time) = 0;
+
+  virtual void PredictNewStateVector(const TMotionModelMeasurement & measurement,
+                                     double current_time,
+                                     Eigen::Matrix<TData, Eigen::Dynamic, 1> & state,
+                                     Eigen::Matrix<TData, StateDim, StateDim> & jacobian,
+                                     Eigen::Matrix<TData, StateDim, StateDim> & r,
+                                     double last_state_update_time) = 0;
 };
 
 }

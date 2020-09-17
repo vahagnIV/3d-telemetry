@@ -12,46 +12,31 @@
 
 namespace gago {
 
-namespace internal {
-
-struct __vel_measurement {
-  double t;
+struct Velocity2dMeasurement {
   double v;
   double omega;
 };
 
-}
-
-template<typename TData>
-class Velocity2DMotionModel : public IMotionModel<TData, 3> {
+template<typename TData=float>
+class Velocity2DMotionModel : public IMotionModel<Velocity2dMeasurement, TData> {
  public:
-  Velocity2DMotionModel(int measurement_frequency, int time_depth)
-      : last_measurement_index_(measurement_frequency * time_depth - 1),
-        measurements_(measurement_frequency * time_depth) {}
+  Velocity2DMotionModel() {}
 
-  void AppendMeasurement(double v, double omega, double t) {
-    last_measurement_index_ = (last_measurement_index_ + 1) % measurements_.size();
-    measurements_[last_measurement_index_].v = v;
-    measurements_[last_measurement_index_].omega = omega;
-    measurements_[last_measurement_index_].t = t;
-  }
-
-  void GetJacobianAndError(Eigen::Matrix<TData, 3, 1> & self_state,
-                           Eigen::Matrix<TData, 3, 3> & jacobian,
-                           Eigen::Matrix<TData, 3, 3> & r,
-                           double last_state_update_time,
-                           double current_time) override {
+  void PredictNewStateVector(const Velocity2dMeasurement & measurement,
+                             double current_time,
+                             Eigen::Matrix<TData, Eigen::Dynamic, 1> & state,
+                             Eigen::Matrix<TData, 6, 6> & jacobian,
+                             Eigen::Matrix<TData, 6, 6> & r,
+                             double last_state_update_time) override {
 
     // TODO: implement
-    self_state(Eigen::seq(0, 2), 0) = Eigen::Matrix<TData, 3, 1>::Ones();
-    jacobian = Eigen::Matrix<TData, 3, 3>::Identity();
-    r = Eigen::Matrix<TData, 3, 3>::Identity()*2;
+    state(Eigen::seq(0, 5), 0) = Eigen::Matrix<TData, 5, 1>::Ones();
+    jacobian = Eigen::Matrix<TData, 6, 6>::Identity();
+    r = Eigen::Matrix<TData, 6, 6>::Identity() * 2;
 //    std::cout << self_state << std::endl;
-
   }
+
  private:
-  std::vector<gago::internal::__vel_measurement> measurements_;
-  size_t last_measurement_index_;
 
 };
 
