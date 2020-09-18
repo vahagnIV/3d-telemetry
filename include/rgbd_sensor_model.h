@@ -28,18 +28,14 @@ template <int StateDim = 6>
                      double sensor_measurement_time,
                      double last_measurement_time,
                      RgbdLandmarks & current_landmark_descriptors,
-                     TCoordinateSet & current_coordinates,
+                     const Eigen::Matrix<float, Eigen::Dynamic, 1> & current_coordinates,
                      Eigen::Array<int, Eigen::Dynamic, 1> & out_matched_landmark_indices,
                      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> & out_Q,
                      Eigen::Matrix<float, Eigen::Dynamic, 1> & out_z,
                      Eigen::Matrix<float, Eigen::Dynamic, 1> & out_h,
                      Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> & out_jacobian,
                      RgbdLandmarks & new_landmark_descriptors,
-                     TCoordinateSet & new_coordinates){
-
-
-
-  }
+                     TCoordinateSet & new_coordinates){}
   private:
   std::shared_ptr<TFeatureExtractor> feature_extractor_;
 

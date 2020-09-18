@@ -48,15 +48,17 @@ class ExtendedKalmanFilter {
     last_state_update_time_ = time;
   }
 
-  void UpdateSensorModelMeasurement(TSensorModelMeasurement & measurement, double time) {
+  void UpdateSensorModelMeasurement(const TSensorModelMeasurement & measurement, double time) {
 
     Eigen::Array<int, Eigen::Dynamic, 1> matched_landmark_indices;
     Eigen::Matrix<TData, Eigen::Dynamic, Eigen::Dynamic> Q;
     Eigen::Matrix<TData, Eigen::Dynamic, 1> z;
     Eigen::Matrix<TData, Eigen::Dynamic, 1> h;
     Eigen::Matrix<TData, Eigen::Dynamic, Eigen::Dynamic> H;
-    TLandmarkDescriptor new_landmark_descriptors;
-    typename ISensorModel<TSensorModelMeasurement, TLandmarkDescriptor, TData, LandmarkDim>::TCoordinateSet new_coordinates;
+
+    typename ISensorModel<TSensorModelMeasurement, TLandmarkDescriptor, TData, LandmarkDim>::TCoordinateSet
+        new_coordinates;
+
     sensor_model_->UpdateSensor(measurement,
                                 time,
                                 0,
@@ -67,15 +69,39 @@ class ExtendedKalmanFilter {
                                 z,
                                 h,
                                 H,
-                                new_landmark_descriptors,
                                 new_coordinates);
-    auto && sigma_slice = sigma_(matched_landmark_indices, matched_landmark_indices);
+
+    assert(matched_landmark_indices.rows() % LandmarkDim == 0);
+
+    Eigen::Array<int, Eigen::Dynamic, 1> matched_landmark_indices_main(StateDim + matched_landmark_indices.rows());
+    for (int i = 0; i < StateDim; ++i)
+      matched_landmark_indices_main(i, 0) = i;
+
+    matched_landmark_indices_main(Eigen::seq(StateDim, StateDim + matched_landmark_indices.rows() - 1), Eigen::all) =
+        matched_landmark_indices;
+    auto && sigma_slice = sigma_(matched_landmark_indices_main, matched_landmark_indices_main);
     auto && HT = H.transpose();
     auto K = sigma_slice * HT * (H * sigma_slice * HT + Q).inverse();
-    state_vector_(matched_landmark_indices) += K * (z - h);
-    sigma_slice = (sigma_slice.Identity() - K * H) * sigma_slice;
+    state_vector_(matched_landmark_indices_main) += K * (z - h);
+    sigma_slice = (-K * H
+        + Eigen::Matrix<TData, Eigen::Dynamic, Eigen::Dynamic>::Identity(sigma_slice.rows(), sigma_slice.cols()))
+        * sigma_slice;
+    sigma_(Eigen::seq(0, matched_landmark_indices_main.rows() - 1),
+           Eigen::seq(0, matched_landmark_indices_main.rows() - 1)) =
+        sigma_slice;
 
-    sigma_(Eigen::seq(0,matched_landmark_indices.rows()), Eigen::seq(0,matched_landmark_indices.rows())) = sigma_slice;
+    long new_size = matched_landmark_indices_main.rows() + new_coordinates.size();
+    sigma_.conservativeResize(new_size, new_size);
+
+    sigma_(Eigen::all, Eigen::seq(sigma_slice.cols(), new_size - 1)) =
+        Eigen::Matrix<TData, Eigen::Dynamic, Eigen::Dynamic>::Zero(sigma_.rows(), new_size - sigma_slice.cols());
+
+    sigma_(Eigen::seq(sigma_slice.rows(), new_size - 1),
+           Eigen::seq(0, sigma_slice.cols() - 1)) =
+        Eigen::Matrix<TData, Eigen::Dynamic, Eigen::Dynamic>::Zero(new_size - sigma_slice.rows(), sigma_slice.cols());
+
+    state_vector_.conservativeResize(new_size);
+    state_vector_(Eigen::seq(matched_landmark_indices_main.rows(), new_size - 1)) = new_coordinates.reshaped(new_coordinates.size() , 1);
 
 
   }
@@ -84,8 +110,8 @@ class ExtendedKalmanFilter {
 //  void
 
 
-  Eigen::Matrix<TData, StateDim, 1> state_vector_;
-  Eigen::Matrix<TData, StateDim, StateDim> sigma_;
+  Eigen::Matrix<TData, Eigen::Dynamic, 1> state_vector_;
+  Eigen::Matrix<TData, Eigen::Dynamic, Eigen::Dynamic> sigma_;
   std::shared_ptr<IMotionModel<TMotionModelMeasurement, TData, StateDim >> motion_model_;
   std::shared_ptr<ISensorModel<TSensorModelMeasurement, TLandmarkDescriptor, TData, LandmarkDim>> sensor_model_;
   TLandmarkDescriptor current_landmark_descriptors_;
